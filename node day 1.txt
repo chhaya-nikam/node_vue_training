@@ -1,0 +1,151 @@
+Node.js
+--More advanced Javascript
+--server side runtime environment
+--v8 javascript engine, inbuilt available
+--event driven , non-blocking(async)
+--Single Threaded Application
+https://medium.com/technofunnel/node-js-single-threaded-event-based-architecture-9f73daee37a1
+
+Types of Modules in Node.js
+1. local modules // we will create later
+2. Global module // no need to import them
+3. Required modules // can be used only after import
+
+Example 1:
+// run `node index.js` in the terminal
+const myos = require('os'); // import the modules
+console.log(`Hello Node.js v${process.versions.node}!`);
+console.log(myos.platform());
+console.log(myos.homedir());
+
+function welcome() {
+  console.log('Welcome function called');
+}
+function bye() {
+  console.log('bye........');
+  clearInterval(myInterval);
+}
+var myInterval = setInterval(welcome, 300);
+//bye()
+ // defer the function calling
+ setTimeout(bye,2000)
+
+--------------------------------------------------------------------------
+Example: 
+// create a file and write to the file
+const fp=require("fs")
+var buffer=new Buffer("If path refers to a symbolic link, then the link is removed without affecting the file or directory to which that link refers. If the path refers to a file path that is not a symbolic link, the file is deleted. See the POSIX unlink(2) documentation for more detail.");
+
+fp.writeFile("test.txt",buffer,(error)=>{
+ if(error) console.log("Error in writing to the file");
+ console.log('File Writing completed')
+} );
+
+fp.writeFileSync("test2.txt","File test in sync method");
+
+Assignment: WAP to read the files.
+
+------------------------------------------------------------------------------------
+==> Events module in node.js
+var events=require("events")
+
+// create a object of EventEmitter class
+var em=new events.EventEmitter();
+
+//create a event
+em.on('FirstEvent',(data)=>{
+  console.log("FirstEvent......" + data);
+});
+
+em.on('AddEvent',(data1,data2)=>{
+  console.log("AddEvent......" + (parseInt(data1)+parseInt(data2)));
+});
+
+
+// raise the event
+var i=false;
+if(i) em.emit('FirstEvent',"Hello");
+em.emit('AddEvent',2,2);
+----------------------------------------------------------------------------------
+// import the http module
+const http=require("http")
+const url=require("url")
+
+// create a server
+var server=http.createServer((req,resp)=>{
+//fetch the parameters
+//construct the URL
+	const myURL =
+  new url.URL('http://localhost:2222'+ req.url );
+  console.log(myURL);
+
+var myid=myURL.searchParams.get("id");
+var myname=myURL.searchParams.get("name");
+var mydesig=myURL.searchParams.get("designation");
+  
+ var data=myid+" " + myname + " " +mydesig;
+
+resp.end(data);
+});
+
+//start the server
+server.listen(2222,()=>console.log('server started'))
+
+-----------------------------------------------------------
+Method 1: creating a express app
+npm install express
+
+1. create a folder
+2. c:\myapp>npm init
+   server.js
+
+// run `node index.js` in the terminal
+var exp=require("express")
+var server=exp()
+console.log(`Hello Node.js v${process.versions.node}!`);
+
+//create mapping- perform the routes
+server.get("/",(request,response)=>{
+response.send("Welcome to express application")
+});
+server.get("/home",(request,response)=>{
+  response.send("This is home route")
+  });
+  server.post("/posttest",(request,response)=>{
+    response.send("This is post test")
+    });
+server.listen(2222,()=>console.log('server started'))
+
+node server.js
+
+
+
+-------------------------------------------------------
+Method 2: creating Express  app
+
+Node.js Framework Tools
+Express
+
+1. create a folder for application eg. myexpressgenapp
+2. C:\pracs\nodepracs\myexpressgenapp>npm i -g express-generator
+3. C:\pracs\nodepracs\myexpressgenapp>express
+4. C:\pracs\nodepracs\myexpressgenapp>code .
+5.C:\pracs\nodepracs\myexpressgenapp>npm install
+6. npm start
+http://localhost:3000
+
+To watch the application , while in dev env
+modify the package.json
+ "scripts": {
+    "start": "nodemon ./bin/www"
+  }
+-------------------------------------------------------------
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,620 @@
+Session 3:
+
+===>Data Source : MySQL
+
+In the earlier session we created the datasource as a Array.
+Now we will develop using Mysql as a backend and nodejs as the front end
+--install the mysql package
+npm install mysql
+https://expressjs.com/en/guide/database-integration.html
+
+--check that sql is connected
+problem:MySQL 8.0 - Client does not support authentication protocol requested by server; consider upgrading MySQL client
+
+solution:Execute the following query in MYSQL Workbench
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password'
+
+--create the demo db and the table
+drop database bank;
+create database bank;
+use bank;
+create table accounts(accno int primary key,name text,balance float,doc date);
+insert into accounts values(101,'Ram',10000.56,'2011-11-11');
+insert into accounts values(102,'Sachin',20000.56,'2011-11-11');
+insert into accounts values(103,'Sunil',30000.56,'2011-11-11');
+insert into accounts values(104,'Mohan',40000.56,'2011-11-11');
+insert into accounts values(105,'Pratap',50000.56,'2011-11-11');
+select * from accounts;
+*/
+
+http://localhost:3000/bangkingmysql/accounts       : GET     => GET ALL ACCOUNTS
+http://localhost:3000/bangkingmysql/accounts/101   : GET     => GET ACCOUNT  WITH ACCNO
+http://localhost:3000/bangkingmysql/accounts/101   : PUT     => UPDATE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingmysql/accounts/103   : DELETE  => DELETE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingmysql/accounts       : POST    => ADD ACCOUNT
+
+==>Modify the app.js to add the routes
+var bankingMySQLRouter = require('./routes/bankingmysql');
+app.use('/bankingmysql', bankingMySQLRouter);
+
+==>create the bankingmysql.js in the routes
+
+var express = require('express');
+var mysql=require("mysql");
+var router = express.Router();
+
+/*
+drop database bank;
+create database bank;
+use bank;
+create table accounts(accno int primary key,name text,balance float,doc date);
+insert into accounts values(101,'Ram',10000.56,'2011-11-11');
+insert into accounts values(102,'Sachin',20000.56,'2011-11-11');
+insert into accounts values(103,'Sunil',30000.56,'2011-11-11');
+insert into accounts values(104,'Mohan',40000.56,'2011-11-11');
+insert into accounts values(105,'Pratap',50000.56,'2011-11-11');
+select * from accounts;
+*/
+
+//create a connection with mysql
+
+var connection=mysql.createConnection({
+    database:"bank",
+    user:"root",
+    password:"password",
+    port:3306,
+    host:"localhost"
+});
+
+
+/* GET all Accounts */
+router.get('/accounts', function(req, res, next) {  
+    connection.query("SELECT * FROM ACCOUNTS",function(error,data){
+        if(error)
+        return res.send(""+error);
+        else
+        res.json(data);
+    });
+  
+});
+
+/* GET Account by accno : */
+router.get('/accounts/:accno', function(req, res, next) {
+    var accno=parseInt(req.params.accno);
+    
+      
+    connection.query("SELECT * FROM ACCOUNTS WHERE ACCNO=?",[accno],function(error,data){
+        if(error)
+        return res.send(""+error);
+        else
+        res.json(data[0]);
+    });
+
+});
+  
+/* DELETE Account by accno : */
+router.delete('/accounts/:accno', function(req, res, next) {
+    
+    var accno=parseInt(req.params.accno);
+          
+    connection.query("DELETE FROM ACCOUNTS WHERE ACCNO=?",[accno],function(error,data){
+        if(error)
+        return res.send(""+error);
+     
+        connection.query("SELECT * FROM ACCOUNTS",function(error,data){
+
+            if(error)
+            return res.send(""+error);
+            else
+            res.json(data);
+        });  
+    });
+  
+});
+  
+/* UPDATE Account by accno : */
+router.put('/accounts/:accno', function(req, res, next) {
+    
+    var accno=parseInt(req.params.accno);    
+    var account=req.body;  
+    connection.query("UPDATE ACCOUNTS SET NAME=?,BALANCE=?,DOC=? WHERE ACCNO=?",[account.name,account.balance,account.doc,accno],function(error,data){
+        if(error)
+        return res.send(""+error);     
+        connection.query("SELECT * FROM ACCOUNTS",function(error,data){
+            if(error)
+            return res.send(""+error);
+            else
+            res.json(data);
+        });      
+    });
+    
+});
+
+
+/* ADD Account  */
+router.post('/accounts', function(req, res, next) {
+        
+    var accountData=req.body;
+//if parameter names are same as the table column names we can use only one ?
+    connection.query("INSERT INTO ACCOUNTS SET ?",[accountData],function(error,data){
+        if(error)
+        return res.send(""+error);
+     
+        connection.query("SELECT * FROM ACCOUNTS",function(error,data){
+
+            if(error)
+            return res.send(""+error);
+            else
+            res.json(data);
+        });
+      
+    });
+
+});
+
+module.exports = router;
+
+==>test the get mappings using the index page links
+==> test all other mappings using postman 
+
+https://www.tutorialsteacher.com/nodejs/data-access-in-nodejs
+==================================================================================================
+https://www.mongodb.org/dl/win32/x86_64-2008plus-ssl
+===>Data Source : MongoDB
+ npm install mongoose
+
+http://localhost:3000/bangkingmongodb/accounts       : GET     => GET ALL ACCOUNTS
+http://localhost:3000/bangkingmongodb/accounts/101   : GET     => GET ACCOUNT  WITH ACCNO
+http://localhost:3000/bangkingmongodb/accounts/101   : PUT     => UPDATE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingmongodb/accounts/103   : DELETE  => DELETE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingmongodb/accounts       : POST    => ADD ACCOUNT
+
+==>starting the mongodb server
+F:\softwares\mongodb-windows-x86_64-4.2.5\mongodb-win32-x86_64-windows-4.2.5\bin>
+start mongod --dbpath=c:\mongodbdata
+
+==> start the mongodb client
+F:\softwares\mongodb-windows-x86_64-4.2.5\mongodb-win32-x86_64-windows-4.2.5\bin>mongo
+
+==>Adding the routes in app.js
+var bankingMongoDBRouter = require('./routes/bankingmongodb');
+app.use('/bankingmongodb', bankingMongoDBRouter);
+
+==>bankingmongodb.js in routes folder
+var express = require('express');
+var mongoose=require("mongoose");
+var router = express.Router();
+
+var dbName = 'bank';
+var connectionString = 'mongodb://localhost:27017/'+dbName;
+
+//create a connection with mmongodb
+mongoose.connect(connectionString);
+var userSchema = new mongoose.Schema({
+  accno: Number,
+  name: String,
+  balance: Number,
+  doc: String,
+});
+
+var  Account=mongoose.model('account', userSchema);
+
+/* GET all Accounts */
+router.get("/accounts", async (request, response) => {
+    const accounts = await Account.find({});
+      try {
+      response.send(accounts);
+    } catch (error) {
+      response.status(500).send(error);
+    }
+  });
+
+  router.post("/accounts", async (request, response) => {
+    const account = new Account(request.body);
+  
+    try {
+      await account.save();
+      response.send(account);
+    } catch (error) {
+      response.status(500).send(error);
+    }
+});
+
+module.exports = router;
+============================================================================================
+==>Handling sessions
+What are sessions?
+In a web application, data is transferred from a browser to a server over HTTP. In modern applications, we use the HTTPS protocol, which is HTTP over TLS/SSL (secure connection), to transfer data securely.
+
+Looking at common use cases, we often encounter situations where we need to retain user state and information. However, HTTP is a stateless protocol. Sessions are used to store user information between HTTP requests.
+
+We can use sessions to store users' settings like when not authenticated. Post authentication sessions are used to identify authenticated users. Sessions fulfill an important role between user authentication and authorization.
+---------------------------------------------------------
+==>How to use in NodeJs
+-->npm install express-session
+
+-->in app.js at the top
+var expressSession=require("express-session");
+
+-->Enable session handling in app.js
+app.use(expressSession({
+  resave:true,
+  saveUninitialized:true,
+  secret:"Hello"
+})); //enable session handling 
+app.use(logger('dev'));
+-->add the routes in the app.js
+var shoppingRouter = require('./routes/shopping');
+app.use('/shopping',shoppingRouter);
+
+-----------------------------------
+-->shopping.js
+var express = require('express');
+var router = express.Router();
+
+router.post('/', function(request, response) { 
+  
+    var product=request.body.product;
+    var quantity=request.body.quantity;
+    var action=request.body.action;
+
+    if(action=="ADD"){
+
+    request.session[product]=quantity;
+    response.redirect("/shop.html");
+
+    }else  if(action=="REMOVE"){
+        delete request.session[product];
+        response.redirect("/shop.html");
+    }
+    else     if(action=="SHOWALL"){
+  
+    var data="";
+    console.log(request.session["cookie"]);
+    console.log("Session ID ",request.session["cookie"]);
+    
+    for(prop in request.session)
+      {
+      data=data+"<br/>"+prop+" => "+request.session[prop];
+      } 
+
+    response.send("Products In the Cart <hr/>"+data);
+    }
+    else if(action=="PAYAMOUNT"){
+         response.send("Payment Logic goes here");
+   }
+    else if(action=="LOGOUT"){
+        request.session.destroy(function(err){
+         if(err)
+         response.send(err);
+        })
+        response.redirect("/shop.html");
+   }        
+});
+
+module.exports = router;
+--------------------------------------
+--shop.html
+<HTML>
+    <BODY bgcolor="wheat">
+    <form method="post" action="shopping">
+    <center>
+    <h2>WELCOME TO SHOPPING MALL</h2>
+    <font color="blue" size=4>
+    select product code 
+    <select name="product">
+    <option value="Mobile">Mobile</option>
+    <option value="Laptop">Laptop</option>
+    <option value="Camera">Camera</option>
+    <option value="Router">Router</option>
+    <option value="HardDisk">HardDisk</option>
+    </select>
+    <br><br>
+    Product quantity
+    <input type="number" name="quantity" value=""><br><br>
+    
+    <input type="submit" name="action" value="ADD">
+    <input type="submit" name="action" value="REMOVE">
+    <input type="submit" name="action" value="SHOWALL">
+    <input type="submit" name="action" value="PAY AMOUNT">
+    <input type="submit" name="action" value="LOGOUT">
+    </center>
+</font>
+</form>
+</BODY>
+</HTML>
+
+--> Test the app   
+-----------------------------------------------------------------------------------
+==>getting the sessionId
+app.use(session({
+    secret: 'veryimportantsecret', 
+    genid: function(req) {
+      return genuuid() // use UUIDs for session IDs
+     }
+}))
+---------------------------------------------------------
+Self Practice:Using session for Authentication
+
+const express = require('express');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+const router = express.Router();
+const app = express();
+
+app.use(session({secret: 'ssshhhhh',saveUninitialized: true,resave: true}));
+app.use(bodyParser.json());      
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.static(__dirname + '/views'));
+
+var sess; // global session, NOT recommended
+
+router.get('/',(req,res) => {
+    sess = req.session;
+    if(sess.email) {
+        return res.redirect('/admin');
+    }
+    res.sendFile('index.html');
+});
+
+router.post('/login',(req,res) => {
+    sess = req.session;
+    sess.email = req.body.email;
+    res.end('done');
+});
+
+router.get('/admin',(req,res) => {
+    sess = req.session;
+    if(sess.email) {
+        res.write(`<h1>Hello ${sess.email} </h1><br>`);
+        res.end('<a href='+'/logout'+'>Logout</a>');
+    }
+    else {
+        res.write('<h1>Please login first.</h1>');
+        res.end('<a href='+'/'+'>Login</a>');
+    }
+});
+
+router.get('/logout',(req,res) => {
+    req.session.destroy((err) => {
+        if(err) {
+            return console.log(err);
+        }
+        res.redirect('/');
+    });
+
+});
+
+app.use('/', router);
+
+app.listen(process.env.PORT || 3000,() => {
+    console.log(`App Started on PORT ${process.env.PORT || 3000}`);
+});
+
+there are four routers. First, which render the home page, the second router is used for login operation. We are not doing any authentication here for the sake of simplicity.
+
+The third router is used for admin area where the user can only go if he/she is log-in. The fourth and the last router is for session destruction.
+
+Each router checks whether the sess.emailvariable is set or not and that could be set only by logging in through front-end. Here is my HTML code which resides in views directory.
+
+index.html
+<html>
+<head>
+<title>Session Management in NodeJS using Node and Express</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    var email,pass;
+    $("#submit").click(function(){
+        email=$("#email").val();
+        pass=$("#password").val();
+        /*
+        * Perform some validation here.
+        */
+        $.post("/login",{email:email,pass:pass},function(data){
+            if(data==='done') {
+                window.location.href="/admin";
+            }
+        });
+    });
+});
+</script>
+</head>
+<body>
+<input type="text" size="40" placeholder="Type your email" id="email"><br />
+<input type="password" size="40" placeholder="Type your password" id="password"><br />
+<input type="button" value="Submit" id="submit">
+</body>
+</html>
+-----------------------------------------------------------
+Cookies are small data that are stored on a client side and sent to the client along with server requests. Cookies have various functionality, they can be used for maintaining sessions and adding user-specific features in your web app. For this, we will use cookie-parser module of npm which provides middleware for parsing of cookies.
+
+npm install express cookie-parser --save
+
+For cookies first, we need to import the module in our app.js file and use it like other middlewares.
+
+
+var cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
+Let’s say we have a user and we want to add that user data in the cookie then we have to add that cookie to the response using the following code :
+
+res.cookie(name_of_cookie, value_of_cookie);
+
+==>cookeDemo.js
+
+let express = require('express'); 
+let cookieParser = require('cookie-parser'); 
+//setup express app 
+let app = express() 
+
+app.use(cookieParser()); 
+
+
+//basic route for homepage 
+app.get('/', (req, res)=>{ 
+res.send('welcome to express app'); 
+}); 
+
+//JSON object to be added to cookie 
+let users = { 
+name : "Ritik", 
+Age : "18"
+} 
+
+//Route for adding cookie 
+app.get('/setuser', (req, res)=>{ 
+res.cookie("userData", users); 
+res.send('user data added to cookie'); 
+}); 
+
+//Iterate users data from cookie 
+app.get('/getuser', (req, res)=>{ 
+//shows all the cookies 
+res.send(req.cookies); 
+}); 
+
+//server listens to port 3000 
+app.listen(3000, (err)=>{ 
+if(err) 
+throw err; 
+console.log('listening on port 3000'); 
+}); 
+------------------------------------
+//Expires after 400000 ms from the time it is set.
+res.cookie(cookie_name, 'value', {expire: 400000 + Date.now()});
+
+Destroy the cookies :
+We can destroy cookies using following code :
+
+res.clearCookie(cookieName);
+------------------------------------------
+To harden our session cookies, we can assign the following options:
+
+app.use(session({
+  secret: ['veryimportantsecret','notsoimportantsecret','highlyprobablysecret'],  
+   name: "secretname",
+  cookie: {
+      httpOnly: true,
+      secure: true,
+      sameSite: true,
+      maxAge: 600000 // Time is in miliseconds
+  }
+}))
+
+sameSite: true blocks CORS requests on cookies. This will affect the workflow on API calls and mobile applications.
+secure requires HTTPS connections. Also, if the Node app is behind a proxy (like Nginx), we will have to set proxy to true, as shown below.
+app.set('trust proxy', 1)
+-------------------------------------------------------------
+Securing Cookie Attributes
+Cookies can be secured using the following attributes.
+
+The Secure attribute instructs the browser to set cookies over HTTPS only. This attribute prevents MITM attacks since the transfer is over TLS.
+The HttpOnly attribute blocks the ability to use the document.cookie object. This prevents XSS attacks from stealing the session identifier.
+The SameSite attribute blocks the ability to send a cookie in a cross-origin request. This provides limited protection against CSRF attacks.
+Setting Domain & Path attributes can limit the exposure of a cookie. By default, Domain should not be set and Path should be restricted.
+Expire & Max-Age allow us to set the persistence of a cookie.
+==========================================================================================
+==>Handling file upload
+--npm install file-upload
+npm i express-fileupload
+
+--in app.js at the top
+var expressFileUpload = require('express-fileupload');
+
+--Enable file upload in app.js
+app.use(expressFileUpload());//enable file uplading
+
+--Add the routes in the app.js
+var uploadRouter = require('./routes/upload');
+app.use('/upload',uploadRouter);
+
+==>upload.js in routes
+var express = require('express');
+var router = express.Router();
+
+/* GET users listing. */
+router.post('/',function(request, response) {
+ 
+  if (!request.files)
+  return response.status(400).send('No files were uploaded.');
+ 
+let  resume= request.files.resume;
+
+resume.mv("./uploads/"+request.files.resume.name,function(err){
+if (err)
+ return response.status(500).send(err);
+ response.send("File Uploaded successfully");
+});
+
+});
+
+
+/* GET users listing. */
+router.post('/multiple',function(request, response) {
+  
+   if (!request.files)
+   return response.status(400).send('No files were uploaded.');
+ 
+
+ for( i in request.files.photos) 
+{ 
+ console.log("Photo :",i);
+
+ photo=request.files.photos[i];
+
+ photo.mv("./uploads/"+photo.name,function(err){
+ if (err)
+  return response.status(500).send(err);
+  });
+}
+response.send("All Files Uploaded Successfully");  
+
+ });
+ 
+module.exports = router;
+---------------------------------------------------
+upload.html
+<html>
+ <head>
+  <title> Login Page </title>
+ </head>
+ <body bgcolor="orange">
+ <div align="center">
+
+<form action="upload" method="post" target="result"
+enctype="multipart/form-data">
+
+    Welcome To File Upload  Page <br/><br/>
+
+    Upload Resume: <input type="file" name="resume" > <br>
+
+    <br/><br/>
+
+<input type="submit"  name="action" value="Upload">
+</form>
+<hr/>
+
+<form action="upload/multiple" method="post" target="result"
+enctype="multipart/form-data">
+
+    Welcome To Multi File Upload  Page <br/><br/>
+
+    Upload Photos: <input type="file" name="photos" multiple> <br>
+
+    <br/><br/>
+
+<input type="submit"  name="action" value="Upload Files">
+</form>
+
+<iframe  name="result" src="" width="200" height="200">
+</iframe>
+</div>
+</body>
+</html>
+
+--> save and test the code
+===============================================================================================
+
+
+

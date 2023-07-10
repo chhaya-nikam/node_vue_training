@@ -1,0 +1,220 @@
+Activity ==> creating restful API
+Develop a Express Application to provide  below services(Restful API)  
+
+part 1: Data Source : Array
+
+http://localhost:3000/bangkingarray/accounts       : GET     => GET ALL ACCOUNTS
+http://localhost:3000/bangkingarray/accounts/101   : GET     => GET ACCOUNT  WITH ACCNO
+http://localhost:3000/bangkingarray/accounts/101   : PUT     => UPDATE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingarray/accounts/103   : DELETE  => DELETE ACCOUNT WITH ACCNO
+http://localhost:3000/bangkingarray/accounts       : POST    => ADD ACCOUNT
+
+Steps:
+1.create a bankingarray.js in routes folder.
+code:
+var express = require('express');
+var router = express.Router();
+
+//datasource
+var accounts=[
+    {accno:101,name:'Rama',balance:1000.56,doc:new Date("July 31,2000")},
+    {accno:102,name:'Mohini',balance:2000.56,doc:new Date("April 11,1995")},
+    {accno:103,name:'Prajakta',balance:3000.56,doc:new Date("June 12,2005")},
+    {accno:104,name:'Sudipa',balance:4000.56,doc:new Date("May 11,2019")},
+    {accno:105,name:'Girija',balance:5000.56,doc:new Date("January 21,2002")},
+];
+
+/* GET all Accounts */
+router.get('/accounts', function(req, res, next) {
+  res.json(accounts);
+});
+
+/* GET Account by accno : */
+router.get('/accounts/:accno', function(req, res, next) {
+    var accno=parseInt(req.params.accno);
+    var account=accounts.filter((account)=>account.accno==accno)[0];
+    res.json(account);
+
+});
+  
+
+/* DELETE Account by accno : */
+router.delete('/accounts/:accno', function(req, res, next) {
+    
+    var accno=parseInt(req.params.accno);
+    accounts=accounts.filter((account)=>account.accno!=accno);
+    res.json(accounts);
+
+});
+  
+/* UPDATE Account by accno : */
+router.put('/accounts/:accno', function(req, res, next) {
+    
+    var accno=parseInt(req.params.accno);
+    
+    var accountData=req.body;
+    
+    accounts.forEach((account,index)=>{
+        if(accno==account.accno)
+          accounts[index]=accountData;
+    });
+    
+    res.json(accounts);
+});
+
+
+/* ADD Account  */
+router.post('/accounts', function(req, res, next) {
+        
+    var accountData=req.body;
+    accounts.push(accountData);
+    res.json(accounts);
+});
+
+module.exports = router;
+--------------
+2.Add our new router to app.js
+var bankingArrayRouter = require('./routes/bankingarray');
+app.use('/bankingarray', bankingArrayRouter);
+
+3.Test the various methods
+========================================================================================
+==>Adding static contents to the App
+No special routes are required to serve the static contents kept in the public folder of the application.
+1. create a index.html in the public folder.
+
+<h1>
+<marquee> Welcome to pwc</marquee>
+</h1>
+
+2.open the app.js note the below line which serves the static contents 
+app.use(express.static(path.join(__dirname, 'public')));
+
+3.test for index page
+
+==>understanding route parametrs
+4.Modify  the index.html to add some hyperlinks
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  
+    <h1>
+    <marquee>Welcome To Express Application at PWC</marquee>
+    </h1>
+    
+  <div class="list-group">
+    <a href="login-get.html" class="list-group-item active">Login GET</a>
+    <a href="login-post.html" class="list-group-item">Login POST</a>
+    <a href="upload.html" class="list-group-item">File Upload</a>
+    <a href="cookiedemo" class="list-group-item">CookieDemo</a>
+    <a href="shop.html" class="list-group-item">Shopping App</a>
+    <a href="bankingarray/accounts" class="list-group-item">Account Array</a>
+    <a href="bankingmysql/accounts" class="list-group-item">Account MySQL</a>
+    <a href="bankingmongodb/accounts" class="list-group-item">Account MongoDB</a>   
+    </div>
+</div>
+</body>
+</html>
+
+5.Add a html page login-get.html
+<html>
+<head>
+<title>Login Page</title>
+</head>
+<body bgcolor="yellow">
+<form name="loginForm" action="login">
+<table width="20%" bgcolor="0099CC" align="center">
+
+<tr>
+<td colspan=2><center><font size=4><b>HTML Login Page</b></font></center></td>
+</tr>
+
+<tr>
+<td>Username:</td>
+<td><input type="text" size=25 name="userid"></td>
+</tr>
+
+<tr>
+<td>Password:</td>
+<td><input type="Password" size=25 name="pwd"></td>
+</tr>
+
+<tr>
+<td ><input type="Reset"></td>
+<td><input type="submit" value="Login"></td>
+</tr>
+
+</table>
+</form>
+</body>
+</html>
+
+6.create a page login-post.html
+<html>
+<head>
+<title>Login Page</title>
+</head>
+<body bgcolor="cyan">
+<form name="loginForm"  method="post" action="login">
+<table width="20%" bgcolor="0099CC" align="center">
+<tr>
+<td colspan=2><center><font size=4><b>HTML Login Page POST</b></font></center></td>
+</tr>
+<tr>
+<td>Username:</td>
+<td><input type="text" size=25 name="userid"></td>
+</tr>
+
+<tr>
+<td>Password:</td>
+<td><input type="Password" size=25 name="pwd"></td>
+</tr>
+
+<tr>
+<td ><input type="Reset"></td>
+<td><input type="submit" value="Login"></td>
+</tr>
+
+</table>
+</form>
+</body>
+</html>
+
+7. test the pages
+
+8.create login.js in the routes folder
+var express = require('express');
+var router = express.Router();
+
+
+/* GET all Accounts */
+router.get('/', function(req, res, next) {
+    var user=req.query.userid;
+    var pwd=req.query.pwd;    
+    var result="GET    : =>  Hello "+user+" Your password is "+pwd;
+     res.send(result);
+});
+
+/* GET Account by accno : */
+router.post('/', function(req, res, next) {
+    var user=req.body.userid;
+    var pwd=req.body.pwd;    
+    var result="POST  : =>  Hello "+user+" Your password is "+pwd;
+    res.send(result);
+});
+
+module.exports = router;
+ 
+9.Add the route to the app.js
+var loginRouter = require('./routes/login');
+app.use('/login', loginRouter);
